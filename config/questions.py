@@ -30,21 +30,21 @@ years_of_experience = "5"          # A number in quotes Eg: "0","1","2","3","4",
 require_visa = "No"               # "Yes" or "No"
 
 # What is the link to your portfolio website, leave it empty as "", if you want to leave this question unanswered
-website = "https://github.com/GodsScion"                        # "www.example.bio" or "" and so on....
+website = "https://github.com/aloksingh245"                        # "www.example.bio" or "" and so on....
 
 # Please provide the link to your LinkedIn profile.
-linkedIn = "https://www.linkedin.com/in/saivigneshgolla/"       # "https://www.linkedin.com/in/example" or "" and so on...
+linkedIn = "https://www.linkedin.com/in/alok-kumar-singh-1365631a1/"       # "https://www.linkedin.com/in/example" or "" and so on...
 
 # What is the status of your citizenship? # If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
 # Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
-us_citizenship = "U.S. Citizen/Permanent Resident"
+us_citizenship = "Other"
 
 
 
 ## SOME ANNOYING QUESTIONS BY COMPANIES 🫠 ##
 
 # What to enter in your desired salary question (American and European), What is your expected CTC (South Asian and others)?, only enter in numbers as some companies only allow numbers,
-desired_salary = 1200000          # 80000, 90000, 100000 or 120000 and so on... Do NOT use quotes
+desired_salary = 300000          # 80000, 90000, 100000 or 120000 and so on... Do NOT use quotes
 '''
 Note: If question has the word "lakhs" in it (Example: What is your expected CTC in lakhs), 
 then it will add '.' before last 5 digits and answer. Examples: 
@@ -56,7 +56,7 @@ And if asked in months, then it will divide by 12 and answer. Examples:
 '''
 
 # What is your current CTC? Some companies make it compulsory to be answered in numbers...
-current_ctc = 800000            # 800000, 900000, 1000000 or 1200000 and so on... Do NOT use quotes
+current_ctc = 300000            # 800000, 900000, 1000000 or 1200000 and so on... Do NOT use quotes
 '''
 Note: If question has the word "lakhs" in it (Example: What is your current CTC in lakhs), 
 then it will add '.' before last 5 digits and answer. Examples: 
@@ -66,6 +66,26 @@ then it will add '.' before last 5 digits and answer. Examples:
 # * 2400000 will be answered as "200000"
 # * 850000 will be answered as "70833"
 '''
+
+# Do you have master's degree?
+masters_degree = "No"           # "Yes" or "No"
+
+# Do you have Bachelor's degree?
+bachelors_degree = "Yes"          # "Yes" or "No"
+
+# How many years of work experience do you have with following technologies?
+# If you don't have experience with some technologies, tool will answer "0" for them!
+# Note: Format must be: "technology": years_of_experience, (years_of_experience must be int without quotes)
+technology_experience = {
+    "python": 1,
+    "javascript": 1,
+    "react": 1,
+    "java": 1,
+    "sql": 1,
+    "git": 1,
+    "html": 1,
+    "css": 1
+}
 
 # (In Development) # Currency of salaries you mentioned. Companies that allow string inputs will add this tag to the end of numbers. Eg: 
 # currency = "INR"                 # "USD", "INR", "EUR", etc.
@@ -84,12 +104,11 @@ then it will divide by 30 or 7 and answer respectively. Examples:
 '''
 
 # Your LinkedIn headline in quotes Eg: "Software Engineer @ Google, Masters in Computer Science", "Recent Grad Student @ MIT, Computer Science"
-linkedin_headline = "Full Stack Developer with Masters in Computer Science and 4+ years of experience" # "Headline" or "" to leave this question unanswered
+linkedin_headline = "Software Engineer | Full Stack Developer | Python | React | 2025 Graduate" # "Headline" or "" to leave this question unanswered
 
 # Your summary in quotes, use \n to add line breaks if using single quotes "Summary".You can skip \n if using triple quotes """Summary"""
 linkedin_summary = """
-I'm a Senior Software Engineer at Amazon with Masters in CS and 4+ years of experience in developing and maintaining Full Stack Web applications and cloud solutions. 
-Specialized in React, Node.js, and Python.
+Passionate Software Engineer and 2025 Graduate skilled in Python, JavaScript, React, Java, Node.js, and Full Stack Web Development. Check my projects on GitHub: https://github.com/aloksingh245
 """
 
 '''
@@ -98,13 +117,36 @@ Note: If left empty as "", the tool will not answer the question. However, note 
 
 # Your cover letter in quotes, use \n to add line breaks if using single quotes "Cover Letter".You can skip \n if using triple quotes """Cover Letter""" (This question makes sense though)
 cover_letter = """
-Cover Letter
+Dear Hiring Team,
+
+I am writing to express my strong interest in the Software Engineer position. As a 2025 graduate with a strong foundation in Computer Science and hands-on experience building full-stack applications with Python, React, JavaScript, and Node.js, I am excited about the opportunity to contribute to your team. You can review my code and projects on my GitHub profile: https://github.com/aloksingh245.
+
+Thank you for your time and consideration.
+
+Best regards,
+Alok Kumar Singh
+Email: aloksinghrajput2724@gmail.com
+Phone: +91 7091136168
+GitHub: https://github.com/aloksingh245
 """
 # Information about you that the AI can use when answering application questions.
 # Put anything an answer might need here, for example: name, years of experience,
 # key skills, location, work authorization, and so on. Use \n for line breaks.
 user_information_all = """
-User Information
+Name: Alok Kumar Singh
+Email: aloksinghrajput2724@gmail.com
+Phone: +91 7091136168
+Current Location: Bengaluru, India
+Education: Bachelor's Degree in Computer Science / Engineering (2025 Passout / Fresher)
+GitHub Profile: https://github.com/aloksingh245
+Portfolio / Website: https://github.com/aloksingh245
+LinkedIn Profile: https://www.linkedin.com/in/alok-kumar-singh-1365631a1/
+Years of Experience: 0 years (Entry level / Fresher / 2025 Passout)
+Notice Period: Immediate Joiner (0 days notice)
+Technical Skills: Python, JavaScript, React, Node.js, Java, SQL, Git, Web Development, Full Stack Development
+
+Why I want to join / Why hire me:
+"As a 2025 Computer Science graduate, I am eager to join a forward-thinking engineering team where I can apply my hands-on problem-solving skills in full-stack development (Python, React, JavaScript, SQL). I am a fast learner, self-driven, and excited to contribute to scalable products while growing alongside experienced mentors. I bring strong foundational coding discipline, enthusiasm for clean code, and immediate availability."
 """
 '''
 Note: If left empty as "", the tool will not answer the question. However, note that some companies make it compulsory to be answered. Use \n to add line breaks.

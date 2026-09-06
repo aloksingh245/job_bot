@@ -214,6 +214,146 @@
         table.jobs a:hover { text-decoration: underline; }
         .tick { color: var(--ok); font-weight: 700; }
         .muted-small { color: var(--muted); font-size: 13px; }
+        .btn-apply-portal {
+            display: inline-block;
+            background: #2563eb;
+            color: #ffffff !important;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-decoration: none !important;
+            box-shadow: 0 1px 3px rgba(37,99,235,.25);
+            transition: background 0.15s;
+        }
+        .btn-apply-portal:hover { background: #1d4ed8; color:#ffffff !important; }
+        .badge-style {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        .badge-remote { background: #dcfce7; color: #15803d; }
+        .badge-hybrid { background: #fef3c7; color: #b45309; }
+        .badge-24h { background: #fae8ff; color: #86198f; font-weight:700; }
+
+        /* External links summary (shown after bot stops) */
+        .ext-summary {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+            border: 2px solid #2563eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+            animation: fadeSlideIn 0.4s ease-out;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ext-summary h3 {
+            margin: 0 0 4px;
+            font-size: 17px;
+            color: #1e40af;
+        }
+        .ext-summary .ext-count {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0 0 14px;
+        }
+        .ext-summary .ext-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .ext-summary .btn-open-all {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .ext-summary .btn-open-all:hover { background: #1d4ed8; }
+        .ext-summary .btn-copy-all {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .ext-summary .btn-copy-all:hover { background: #f1f5f9; }
+        .ext-summary .btn-dismiss {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--muted);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .ext-summary .btn-dismiss:hover { background: #fef2f2; color: var(--danger); }
+        .ext-link-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .ext-link-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+        .ext-link-list li:last-child { border-bottom: none; }
+        .ext-link-list .ext-num {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #e0f2fe;
+            color: #0369a1;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .ext-link-list .ext-info { flex: 1; min-width: 0; }
+        .ext-link-list .ext-title { font-weight: 600; color: var(--ink); }
+        .ext-link-list .ext-company { color: var(--muted); font-size: 12px; }
+        .ext-link-list .ext-url {
+            display: block;
+            color: #2563eb;
+            font-size: 12px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            max-width: 400px;
+        }
+        .badge-pending { background: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 8px; border-radius: 9999px; font-weight: 600; }
+        .badge-applied { background: #dcfce7; color: #166534; font-size: 11px; padding: 2px 8px; border-radius: 9999px; font-weight: 600; }
 
         /* --- Responsive --- */
         @media (max-width: 640px) {
@@ -422,11 +562,18 @@
             });
 
             // Extra "Run" tab (not part of the config schema).
-            var runBtn = el('button', { type: 'button', text: 'Run' });
+            var runBtn = el('button', { type: 'button', text: '▶ Run' });
             runBtn.dataset.tab = 'Run';
             runBtn.addEventListener('click', function () { showTab('Run'); });
             tabs.appendChild(runBtn);
             panels.appendChild(buildRunPanel());
+
+            // Extra "External Jobs (24h)" tab
+            var extBtn = el('button', { type: 'button', text: '🌐 External Jobs (24h)' });
+            extBtn.dataset.tab = 'ExternalJobs';
+            extBtn.addEventListener('click', function () { showTab('ExternalJobs'); });
+            tabs.appendChild(extBtn);
+            panels.appendChild(buildExternalJobsPanel());
 
             wireAi();
             updateModelLists();
@@ -443,9 +590,10 @@
             document.querySelectorAll('#panels .panel').forEach(function (p) {
                 p.classList.toggle('active', p.dataset.tab === name);
             });
-            var isRun = (name === 'Run');
-            document.getElementById('savebar').style.display = isRun ? 'none' : 'flex';
-            if (isRun) { refreshStatus(); refreshLogs(); loadAppliedJobs(); }
+            var isRunOrExt = (name === 'Run' || name === 'ExternalJobs');
+            document.getElementById('savebar').style.display = isRunOrExt ? 'none' : 'flex';
+            if (name === 'Run') { refreshStatus(); refreshLogs(); loadAppliedJobs(); loadExternalLinksSummary(); }
+            if (name === 'ExternalJobs') { loadExternalJobs24h(); }
         }
 
         // ---- AI master switch + model lists ----
@@ -504,16 +652,22 @@
             runbox.appendChild(statusLine);
 
             var actions = el('div', { class: 'run-actions' });
-            var startBtn = el('button', { class: 'btn', id: 'startBtn', type: 'button', text: 'Start' });
+            var startBtn = el('button', { class: 'btn', id: 'startBtn', type: 'button', text: 'Start Auto Applier' });
+            var scrapeBtn = el('button', { class: 'btn secondary', id: 'scrapeBtn', type: 'button', text: '🌐 Scrape External Jobs (Past 24h)' });
             var stopBtn = el('button', { class: 'btn danger', id: 'stopBtn', type: 'button', text: 'Stop' });
             startBtn.addEventListener('click', startBot);
+            scrapeBtn.addEventListener('click', startScraper24h);
             stopBtn.addEventListener('click', stopBot);
             actions.appendChild(startBtn);
+            actions.appendChild(scrapeBtn);
             actions.appendChild(stopBtn);
             runbox.appendChild(actions);
             runbox.appendChild(el('p', { class: 'muted-small',
-                text: 'Tip: save your settings on the other tabs before starting.' }));
+                text: 'Choose "Start Auto Applier" to submit Easy Apply jobs, or "Scrape External Jobs" to collect direct company portal links from the past 24 hours.' }));
             panel.appendChild(runbox);
+
+            // Container for external links summary (populated after bot stops)
+            panel.appendChild(el('div', { id: 'extLinksSummaryHolder' }));
 
             panel.appendChild(el('h2', { class: 'section-h', text: 'Activity log' }));
             panel.appendChild(el('pre', { class: 'log', id: 'logPane', text: 'No activity yet.' }));
@@ -535,17 +689,20 @@
             var dot = document.getElementById('statusDot');
             var text = document.getElementById('statusText');
             var startBtn = document.getElementById('startBtn');
+            var scrapeBtn = document.getElementById('scrapeBtn');
             var stopBtn = document.getElementById('stopBtn');
             if (!dot) return;
             if (running) {
                 dot.classList.add('on');
                 text.textContent = 'Running' + (pid ? ' (process ' + pid + ')' : '') + '...';
                 if (startBtn) startBtn.disabled = true;
+                if (scrapeBtn) scrapeBtn.disabled = true;
                 if (stopBtn) stopBtn.disabled = false;
             } else {
                 dot.classList.remove('on');
                 text.textContent = 'Not running';
                 if (startBtn) startBtn.disabled = false;
+                if (scrapeBtn) scrapeBtn.disabled = false;
                 if (stopBtn) stopBtn.disabled = true;
             }
         }
@@ -569,28 +726,166 @@
                         if (pane.textContent === 'No activity yet.') pane.textContent = '';
                         var atBottom = pane.scrollTop + pane.clientHeight >= pane.scrollHeight - 20;
                         pane.textContent += data.content;
+                        logOffset = data.next_offset;
                         if (atBottom) pane.scrollTop = pane.scrollHeight;
                     }
-                    if (typeof data.next_offset === 'number') logOffset = data.next_offset;
                 })
                 .catch(function () {});
         }
 
         function startBot() {
-            var msgOk = confirm('Start applying now?\n\nA browser window will open and use your LinkedIn account. Keep it in the foreground.');
+            var msgOk = confirm('Start Auto Applier now?\n\nA browser window will open and use your LinkedIn account. Keep it in the foreground.');
             if (!msgOk) return;
             var pane = document.getElementById('logPane');
             pane.textContent = '';
             logOffset = 0;
-            fetch('/api/run', { method: 'POST' }).then(function (r) { return r.json(); })
+            fetch('/api/run', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: 'apply' })
+            }).then(function (r) { return r.json(); })
+                .then(function (s) { setRunningUI(s.running, s.pid); refreshLogs(); })
+                .catch(function () {});
+        }
+
+        function startScraper24h() {
+            var msgOk = confirm('Start scraping external company jobs posted in the Past 24 Hours?\n\nThis will scan LinkedIn for external company application links and save them into a separate file.');
+            if (!msgOk) return;
+            var pane = document.getElementById('logPane');
+            pane.textContent = '';
+            logOffset = 0;
+            fetch('/api/run', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: 'scrape_24h' })
+            }).then(function (r) { return r.json(); })
                 .then(function (s) { setRunningUI(s.running, s.pid); refreshLogs(); })
                 .catch(function () {});
         }
 
         function stopBot() {
             fetch('/api/stop', { method: 'POST' }).then(function (r) { return r.json(); })
-                .then(function (s) { setRunningUI(s.running, s.pid); })
+                .then(function (s) {
+                    setRunningUI(s.running, s.pid);
+                    // After stopping, auto-load and display all external apply links
+                    loadExternalLinksSummary();
+                    loadAppliedJobs();
+                })
                 .catch(function () {});
+        }
+
+        // ---- External links summary (shown after bot stops) ----
+        var _extLinksData = [];
+
+        function loadExternalLinksSummary() {
+            var holder = document.getElementById('extLinksSummaryHolder');
+            if (!holder) return;
+            fetch('/api/external-links-summary').then(function (r) { return r.json(); })
+                .then(function (jobs) {
+                    _extLinksData = jobs;
+                    if (!Array.isArray(jobs) || jobs.length === 0) {
+                        holder.innerHTML = '';
+                        return;
+                    }
+
+                    // Filter to only pending (not yet applied) links
+                    var pending = jobs.filter(function (j) {
+                        return !j.Date_Applied || j.Date_Applied === 'Pending';
+                    });
+
+                    var box = el('div', { class: 'ext-summary' });
+
+                    box.appendChild(el('h3', { text: '🔗 External Apply Links Collected (' + jobs.length + ' total)' }));
+                    var countText = pending.length > 0
+                        ? pending.length + ' pending application' + (pending.length > 1 ? 's' : '') + ' — click the links below to apply on company portals.'
+                        : 'All external applications have been marked as applied!';
+                    box.appendChild(el('p', { class: 'ext-count', text: countText }));
+
+                    var actions = el('div', { class: 'ext-actions' });
+                    if (pending.length > 0) {
+                        var openAllBtn = el('button', { class: 'btn-open-all', type: 'button', text: '🚀 Open All Pending Links (' + pending.length + ')' });
+                        openAllBtn.addEventListener('click', function () { openAllExternalLinks(pending); });
+                        actions.appendChild(openAllBtn);
+                    }
+                    var copyAllBtn = el('button', { class: 'btn-copy-all', type: 'button', text: '📋 Copy All Links' });
+                    copyAllBtn.addEventListener('click', function () { copyAllExternalLinks(jobs); });
+                    actions.appendChild(copyAllBtn);
+                    var dismissBtn = el('button', { class: 'btn-dismiss', type: 'button', text: '✕ Dismiss' });
+                    dismissBtn.addEventListener('click', function () { holder.innerHTML = ''; });
+                    actions.appendChild(dismissBtn);
+                    box.appendChild(actions);
+
+                    // Build the links list
+                    var list = el('ul', { class: 'ext-link-list' });
+                    jobs.forEach(function (job, i) {
+                        var li = el('li');
+
+                        li.appendChild(el('span', { class: 'ext-num', text: String(i + 1) }));
+
+                        var info = el('div', { class: 'ext-info' });
+                        var titleLine = el('span', { class: 'ext-title' });
+                        if (job.Job_Link) {
+                            titleLine.appendChild(el('a', { href: job.Job_Link, target: '_blank', rel: 'noopener', text: job.Title || 'Untitled Job' }));
+                        } else {
+                            titleLine.textContent = job.Title || 'Untitled Job';
+                        }
+                        info.appendChild(titleLine);
+                        info.appendChild(el('span', { class: 'ext-company', text: ' — ' + (job.Company || 'Unknown Company') }));
+
+                        var linkA = el('a', { class: 'ext-url', href: job.External_Job_link, target: '_blank', rel: 'noopener', text: job.External_Job_link });
+                        // When user clicks an external link, mark the job as applied
+                        (function(jid) {
+                            linkA.addEventListener('click', function () {
+                                if (jid) {
+                                    fetch('/applied-jobs/' + jid, { method: 'PUT' }).catch(function () {});
+                                }
+                            });
+                        })(job.Job_ID);
+                        info.appendChild(linkA);
+                        li.appendChild(info);
+
+                        // Status badge
+                        var isPending = !job.Date_Applied || job.Date_Applied === 'Pending';
+                        li.appendChild(el('span', {
+                            class: isPending ? 'badge-pending' : 'badge-applied',
+                            text: isPending ? 'Pending' : 'Applied'
+                        }));
+
+                        list.appendChild(li);
+                    });
+                    box.appendChild(list);
+
+                    holder.innerHTML = '';
+                    holder.appendChild(box);
+                })
+                .catch(function () {});
+        }
+
+        function openAllExternalLinks(jobs) {
+            var msg = 'This will open ' + jobs.length + ' external job link' + (jobs.length > 1 ? 's' : '') + ' in new tabs.\n\nProceed?';
+            if (!confirm(msg)) return;
+            jobs.forEach(function (job, i) {
+                // Stagger tab opening to avoid browser pop-up blocker
+                setTimeout(function () {
+                    window.open(job.External_Job_link, '_blank');
+                    if (job.Job_ID) {
+                        fetch('/applied-jobs/' + job.Job_ID, { method: 'PUT' }).catch(function () {});
+                    }
+                }, i * 300);
+            });
+        }
+
+        function copyAllExternalLinks(jobs) {
+            var lines = jobs.map(function (j, i) {
+                return (i + 1) + '. ' + (j.Title || 'Job') + ' | ' + (j.Company || '') + '\n   ' + j.External_Job_link;
+            });
+            var text = 'External Apply Links\n' + '='.repeat(40) + '\n\n' + lines.join('\n\n');
+            navigator.clipboard.writeText(text).then(function () {
+                alert('✅ All ' + jobs.length + ' external links copied to clipboard!');
+            }).catch(function () {
+                // Fallback: show in a prompt for manual copy
+                prompt('Copy the links below:', text);
+            });
         }
 
         function pollLoop() {
@@ -654,6 +949,116 @@
             }).catch(function () {
                 holder.innerHTML = '';
                 holder.appendChild(el('p', { class: 'muted-small', text: 'Could not load history.' }));
+            });
+        }
+
+        // ---- External Jobs (Past 24h) Panel ----
+        function buildExternalJobsPanel() {
+            var panel = el('div', { class: 'panel' });
+            panel.dataset.tab = 'ExternalJobs';
+
+            panel.appendChild(el('div', { class: 'note', html:
+                '<strong>🌐 Company Website Jobs (Past 24 Hours)</strong><br>' +
+                'These are external openings posted within the last 24 hours that require applying directly on company career portals (Workday, Greenhouse, Lever, etc.). ' +
+                'Click the blue <strong>"Apply on Company Site"</strong> buttons to open and submit your applications.' }));
+
+            var topActions = el('div', { class: 'run-actions', style: 'margin-bottom: 16px;' });
+            var scrapeNowBtn = el('button', { class: 'btn', type: 'button', text: '⚡ Run 24h Scraper Now' });
+            var refreshExtBtn = el('button', { class: 'btn secondary', type: 'button', text: '🔄 Refresh List' });
+            scrapeNowBtn.addEventListener('click', function() { showTab('Run'); startScraper24h(); });
+            refreshExtBtn.addEventListener('click', loadExternalJobs24h);
+            topActions.appendChild(scrapeNowBtn);
+            topActions.appendChild(refreshExtBtn);
+            panel.appendChild(topActions);
+
+            var tableHolder = el('div', { id: 'extJobsHolder', style: 'overflow-x:auto;' });
+            tableHolder.appendChild(el('p', { class: 'muted-small', text: 'Loading 24h external jobs...' }));
+            panel.appendChild(tableHolder);
+
+            return panel;
+        }
+
+        function loadExternalJobs24h() {
+            var holder = document.getElementById('extJobsHolder');
+            if (!holder) return;
+            fetch('/api/external-jobs-24h').then(function (r) {
+                if (!r.ok) return [];
+                return r.json();
+            }).then(function (jobs) {
+                if (!Array.isArray(jobs) || jobs.length === 0) {
+                    holder.innerHTML = '';
+                    var emptyBox = el('div', { class: 'note', style: 'text-align:center; padding: 24px;' });
+                    emptyBox.appendChild(el('h3', { text: 'No 24h External Jobs Scraped Yet' }));
+                    emptyBox.appendChild(el('p', { class: 'muted-small', style: 'margin-bottom:12px;', text: 'Click "Run 24h Scraper Now" to scan LinkedIn for company portal jobs from the past 24 hours.' }));
+                    var runQuickBtn = el('button', { class: 'btn', type: 'button', text: '⚡ Start 24h Scraper Now' });
+                    runQuickBtn.addEventListener('click', function() { showTab('Run'); startScraper24h(); });
+                    emptyBox.appendChild(runQuickBtn);
+                    holder.appendChild(emptyBox);
+                    return;
+                }
+                var countInfo = el('p', { class: 'muted-small', style: 'margin-bottom:10px; font-weight:600;', text: 'Total 24h External Jobs Found: ' + jobs.length });
+                var table = el('table', { class: 'jobs' });
+                var thead = el('thead');
+                var hr = el('tr');
+                ['#', 'Job Title', 'Company', 'Location', 'Work Style', 'Company Career Portal Link', 'HR / Recruiter', 'Scraped At'].forEach(function (h) {
+                    hr.appendChild(el('th', { text: h }));
+                });
+                thead.appendChild(hr);
+                table.appendChild(thead);
+                var tbody = el('tbody');
+                jobs.forEach(function (job, i) {
+                    var tr = el('tr');
+                    tr.appendChild(el('td', { text: String(i + 1) }));
+                    
+                    // Title with LinkedIn link
+                    var titleCell = el('td');
+                    if (job['LinkedIn Job Link']) {
+                        titleCell.appendChild(el('a', { href: job['LinkedIn Job Link'], target: '_blank', rel: 'noopener', text: job.Title || 'View Job' }));
+                    } else { titleCell.textContent = job.Title || ''; }
+                    tr.appendChild(titleCell);
+
+                    // Company
+                    tr.appendChild(el('td', { style: 'font-weight:600;', text: job.Company || '' }));
+
+                    // Location
+                    tr.appendChild(el('td', { text: job['Work Location'] || 'India' }));
+
+                    // Work Style Badge
+                    var styleCell = el('td');
+                    var st = job['Work Style'] || 'On-site';
+                    var badgeClass = 'badge-style';
+                    if (st === 'Remote') badgeClass += ' badge-remote';
+                    else if (st === 'Hybrid') badgeClass += ' badge-hybrid';
+                    styleCell.appendChild(el('span', { class: badgeClass, text: st }));
+                    tr.appendChild(styleCell);
+
+                    // Direct Apply Button
+                    var applyCell = el('td');
+                    var url = job['Company Apply Link'] || job['LinkedIn Job Link'];
+                    if (url) {
+                        applyCell.appendChild(el('a', { class: 'btn-apply-portal', href: url, target: '_blank', rel: 'noopener', text: 'Apply on Company Site ↗' }));
+                    } else { applyCell.textContent = 'N/A'; }
+                    tr.appendChild(applyCell);
+
+                    // HR Contact
+                    var hrCell = el('td');
+                    if (job['HR Name'] && job['HR Name'] !== 'N/A' && job['HR Profile'] && job['HR Profile'] !== 'N/A') {
+                        hrCell.appendChild(el('a', { href: job['HR Profile'], target: '_blank', rel: 'noopener', text: job['HR Name'] }));
+                    } else { hrCell.textContent = job['HR Name'] || 'N/A'; }
+                    tr.appendChild(hrCell);
+
+                    // Scraped At
+                    tr.appendChild(el('td', { class: 'muted-small', text: job['Scraped At'] || 'Today' }));
+
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                holder.innerHTML = '';
+                holder.appendChild(countInfo);
+                holder.appendChild(table);
+            }).catch(function (err) {
+                holder.innerHTML = '';
+                holder.appendChild(el('p', { class: 'muted-small', text: 'Error loading external jobs: ' + err }));
             });
         }
 

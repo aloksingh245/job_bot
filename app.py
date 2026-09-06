@@ -44,7 +44,7 @@ USER_CONFIG_PATH = _overrides.USER_CONFIG_PATH
 LOG_PATH = os.path.join(ROOT, ".bot_run.log")
 PID_PATH = os.path.join(ROOT, ".bot_run.pid")
 
-PATH = 'all excels/'
+PATH = os.path.join(ROOT, 'all excels')
 
 
 # ===========================================================================
@@ -157,9 +157,10 @@ _bot_proc = None
 _bot_lock = threading.Lock()
 
 
-def _bot_command():
+def _bot_command(mode="apply"):
     '''The command used to launch the bot. Isolated so tests can monkeypatch it.'''
-    return [sys.executable, os.path.join(ROOT, "runAiBot.py")]
+    script = "scrape_external_jobs_24h.py" if mode == "scrape_24h" else "runAiBot.py"
+    return [sys.executable, os.path.join(ROOT, script)]
 
 
 def _is_running() -> bool:
@@ -361,8 +362,15 @@ def api_save_config():
 
 @app.route('/api/run', methods=['POST'])
 def api_run():
-    '''Starts the bot as a subprocess if it isn't already running.'''
+    '''Starts the bot or 24h scraper as a subprocess if it isn't already running.'''
     global _bot_proc
+    mode = "apply"
+    try:
+        req_data = request.get_json(silent=True) or {}
+        mode = req_data.get("mode") or request.args.get("mode") or "apply"
+    except Exception:
+        mode = "apply"
+
     with _bot_lock:
         if _is_running():
             return jsonify({"running": True, "pid": _bot_proc.pid,
@@ -379,7 +387,7 @@ def api_run():
                 popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
             else:
                 popen_kwargs["start_new_session"] = True
-            _bot_proc = subprocess.Popen(_bot_command(), **popen_kwargs)
+            _bot_proc = subprocess.Popen(_bot_command(mode=mode), **popen_kwargs)
         except Exception as err:
             return jsonify({"running": False, "error": str(err)}), 500
         try:
@@ -387,7 +395,59 @@ def api_run():
                 pid_file.write(str(_bot_proc.pid))
         except OSError:
             pass
-        return jsonify({"running": True, "pid": _bot_proc.pid})
+        return jsonify({"running": True, "pid": _bot_proc.pid, "mode": mode})
+
+
+@app.route('/api/external-jobs-24h', methods=['GET'])
+def api_external_jobs_24h():
+    '''Return scraped 24h external company jobs as JSON.'''
+    csv_path = os.path.join(PATH, 'external_company_jobs_24h.csv')
+    if not os.path.exists(csv_path):
+        return jsonify([])
+    try:
+        jobs = []
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            for row in csv.DictReader(f):
+                jobs.append(row)
+        return jsonify(jobs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/external-links-summary', methods=['GET'])
+def api_external_links_summary():
+    '''Return all external apply links collected from the applied-jobs history.
+
+    Filters out "Easy Applied" entries and returns only jobs that have a
+    genuine external application URL. The UI uses this after the bot stops
+    to present a consolidated list of links the user still needs to apply to.
+    '''
+    csv_path = os.path.join(PATH, _HISTORY_CSV)
+    if not os.path.exists(csv_path):
+        return jsonify([])
+    try:
+        external_jobs = []
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            for row in csv.DictReader(f):
+                ext_link = (row.get('External Job link') or '').strip()
+                # Skip Easy Applied entries and empty/missing links
+                if not ext_link or ext_link == 'Easy Applied':
+                    continue
+                external_jobs.append({
+                    'Job_ID': row.get('Job ID', ''),
+                    'Title': row.get('Title', ''),
+                    'Company': row.get('Company', ''),
+                    'Work_Location': row.get('Work Location', ''),
+                    'Work_Style': row.get('Work Style', ''),
+                    'Job_Link': row.get('Job Link', ''),
+                    'External_Job_link': ext_link,
+                    'Date_Applied': row.get('Date Applied', 'Pending'),
+                    'HR_Name': row.get('HR Name', 'Unknown'),
+                    'HR_Link': row.get('HR Link', 'Unknown'),
+                })
+        return jsonify(external_jobs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/stop', methods=['POST'])
