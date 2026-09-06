@@ -83,6 +83,15 @@ Click on above image to watch the tutorial for installation and configuration or
 
 <br>
 
+### Application pacing and safety stops
+
+The main application runner uses bounded cooldowns between application attempts. The limits are kept together in [`modules/pacing.py`](modules/pacing.py): the default cooldown is 90–120 seconds and the session cap is 40 attempts. These are code-level safeguards and are not exposed as control-panel settings.
+
+If LinkedIn presents a verification or challenge page, the runner stops and leaves Chrome open for manual review. The standalone 24-hour external-job scraper is not affected by this policy.
+
+
+<br>
+
 
 ## 🧑‍💻 Contributor Guidelines
 Thank you for your efforts and being a part of the community. All contributions are appreciated no matter how small or big. Once you contribute to the code base, your work will be remembered forever.
