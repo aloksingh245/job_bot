@@ -47,6 +47,7 @@ from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
+from modules.pacing import PacingPolicy, PacingStop
 
 if use_AI:
     from modules.ai.connections import create_ai_client, extract_skills, answer_question, close_ai_client
@@ -96,6 +97,8 @@ notice_period = str(notice_period)
 
 aiClient = None
 about_company_for_ai = None  # filled in later, once we're processing a specific job
+pacing = PacingPolicy(logger=print_lg)
+leave_browser_open = False
 
 #>
 
@@ -963,6 +966,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         print_lg("\n________________________________________________________________________________________________________________________\n")
         print_lg(f'\n>>>> Now searching for "{searchTerm}" in "{search_location}" <<<<\n\n')
         buffer(3)
+        pacing.stop_on_challenge(driver, f"loading search results for '{searchTerm}'")
 
         current_count = 0
         try:
@@ -1008,11 +1012,13 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                 for job in job_listings:
                     if keep_screen_awake: pyautogui.press('shiftright')
                     if current_count >= switch_number: break
+                    pacing.stop_on_challenge(driver, "reading the LinkedIn job results")
                     print_lg("\n-@-\n")
 
                     job_id,title,company,work_location,work_style,skip = get_job_main_details(job, blacklisted_companies, rejected_jobs)
                     
                     if skip: continue
+                    pacing.stop_on_challenge(driver, "opening job details")
                     # Redundant fail safe check for applied jobs!
                     try:
                         if job_id in applied_jobs or find_by_class(driver, "jobs-s-apply__application-link", 2):
@@ -1105,6 +1111,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                             skills = "Error extracting skills"
 
                     uploaded = False
+                    pacing.stop_on_challenge(driver, "opening the application flow")
                     # Detect whether this is an Easy Apply job, in three escalating checks.
                     is_easy_apply = try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]")
                     # Check 2: an apply link carrying LinkedIn's in-app apply URL flag.
@@ -1145,6 +1152,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                         except:
                             pass
                     if is_easy_apply:
+                        pacing.begin_application(job_id, title, company)
+                        challenge_detected = False
                         try: 
                             try:
                                 errored = ""
@@ -1168,6 +1177,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
+                                    pacing.stop_on_challenge(driver, "processing an Easy Apply form")
                                     questions_list = answer_questions(modal, questions_list, work_location, job_description=description)
                                     if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
                                     try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review"]') 
@@ -1181,6 +1191,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 if questions_list and errored != "stuck": 
                                     print_lg("Answered the following questions...", questions_list)
                                     print("\n\n" + "\n".join(str(question) for question in questions_list) + "\n\n")
+                                pacing.stop_on_challenge(driver, "reviewing an Easy Apply submission")
                                 wait_span_click(driver, "Review", 1, scrollTop=True)
                                 cur_pause_before_submit = pause_before_submit
                                 if errored != "stuck" and cur_pause_before_submit:
@@ -1202,6 +1213,9 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                     if errored == "nose": raise Exception("Failed to click Submit application 😑")
 
 
+                        except PacingStop:
+                            challenge_detected = True
+                            raise
                         except Exception as e:
                             print_lg("Failed to Easy apply!")
                             # print_lg(e)
@@ -1210,13 +1224,32 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                             failed_count += 1
                             discard_job()
                             continue
+                        finally:
+                            if not challenge_detected:
+                                pacing.finish_application(job_id, title, company)
                     else:
                         # Case 2: Apply externally
-                        skip, application_link, tabs_count = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
-                        if dailyEasyApplyLimitReached:
-                            print_lg("\n###############  Daily application limit for Easy Apply is reached!  ###############\n")
-                            return
-                        if skip: continue
+                        if easy_apply_only:
+                            skip, application_link, tabs_count = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
+                            if dailyEasyApplyLimitReached:
+                                print_lg("\n###############  Daily application limit for Easy Apply is reached!  ###############\n")
+                                return
+                            if skip: continue
+                        else:
+                            pacing.begin_application(job_id, title, company)
+                            challenge_detected = False
+                            try:
+                                skip, application_link, tabs_count = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
+                                if dailyEasyApplyLimitReached:
+                                    print_lg("\n###############  Daily application limit for Easy Apply is reached!  ###############\n")
+                                    return
+                                if skip: continue
+                            except PacingStop:
+                                challenge_detected = True
+                                raise
+                            finally:
+                                if not challenge_detected:
+                                    pacing.finish_application(job_id, title, company)
 
                     submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
                     if uploaded:   useNewResume = False
@@ -1244,6 +1277,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
             print_lg("The browser window was closed. Stopping.", e)
             raise e  # let the outer handler deal with it
         except Exception as e:
+            if isinstance(e, PacingStop):
+                raise
             print_lg(f"Error while reading job listings for '{searchTerm}': {e}")
             critical_error_log("In Applier", e)
             try:
@@ -1278,7 +1313,7 @@ def main() -> None:
     # pyautogui.alert("Please consider sponsoring this project at:\n\nhttps://github.com/sponsors/GodsScion\n\n", "Support the project", "Okay")
     total_runs = 1
     try:
-        global linkedIn_tab, tabs_count, useNewResume, aiClient
+        global linkedIn_tab, tabs_count, useNewResume, aiClient, leave_browser_open
         alert_title = "Error Occurred. Closing Browser!"
         validate_config()
         
@@ -1327,6 +1362,9 @@ def main() -> None:
 
     except NoSuchWindowException as e:
         print_lg("The browser window was closed. Exiting.", e)
+    except PacingStop as e:
+        leave_browser_open = e.leave_browser_open
+        print_lg(f"Run stopped by safety policy: {e.reason}")
     except Exception as e:
         critical_error_log("In Applier Main", e)
         pyautogui.alert(e,alert_title)
@@ -1363,7 +1401,7 @@ def main() -> None:
             timeSavedMsg = f"In this run, you saved approx {round(timeSaved/60)} mins ({timeSaved} secs), please consider supporting the project."
         msg = f"{quotes}\n\n\n{timeSavedMsg}\nYou can also get your quote and name shown here, or prioritize your bug reports by supporting the project at:\n\nhttps://github.com/sponsors/GodsScion\n\n\nSummary:\n{summary}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/\n\nTop Sponsors:\n{sponsors}"
         pyautogui.alert(msg, "Exiting..")
-        print_lg(msg,"Closing the browser...")
+        print_lg(msg, "Leaving Chrome open for manual review..." if leave_browser_open else "Closing the browser...")
         if tabs_count >= 10:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
             pyautogui.alert(msg,"Info")
@@ -1375,7 +1413,7 @@ def main() -> None:
             except Exception as e:
                 print_lg("Failed to close AI client:", e)
         try:
-            if driver:
+            if driver and not leave_browser_open:
                 driver.quit()
         except WebDriverException as e:
             print_lg("Browser already closed.", e)
