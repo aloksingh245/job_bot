@@ -25,7 +25,7 @@ else:
     # from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
-from modules.helpers import find_default_profile_directory, critical_error_log, print_lg
+from modules.helpers import find_default_profile_directory, critical_error_log, print_lg, get_installed_chrome_major_version
 from selenium.common.exceptions import SessionNotCreatedException
 
 def createChromeSession(isRetry: bool = False):
@@ -50,7 +50,11 @@ def createChromeSession(isRetry: bool = False):
         # except (FileNotFoundError, PermissionError) as e: 
         #     print_lg("(auto-managed driver) Got '{}' when using pre-installed ChromeDriver.".format(type(e).__name__))
             print_lg("Downloading the matching Chrome driver... This may take some time (this happens each run when auto_manage_driver is enabled).")
-            driver = uc.Chrome(options=options)
+            chrome_version = get_installed_chrome_major_version()
+            if chrome_version:
+                driver = uc.Chrome(options=options, version_main=chrome_version)
+            else:
+                driver = uc.Chrome(options=options)
     else: driver = webdriver.Chrome(options=options) #, service=Service(executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe"))
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)

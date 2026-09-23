@@ -21,6 +21,8 @@ import os
 import sys
 import json
 import pathlib
+import subprocess
+import re
 
 from time import sleep
 from random import randint
@@ -96,6 +98,24 @@ def find_default_profile_directory() -> str | None:
         if os.path.exists(path_str):
             return path_str
             
+    return None
+
+
+def get_installed_chrome_major_version() -> int | None:
+    '''
+    Detects the installed Google Chrome major version (e.g. 152)
+    to prevent undetected_chromedriver from downloading mismatched driver versions.
+    '''
+    try:
+        import undetected_chromedriver as uc
+        chrome_exe = uc.find_chrome_executable()
+        if chrome_exe:
+            out = subprocess.check_output([chrome_exe, "--version"], stderr=subprocess.STDOUT).decode("utf-8")
+            match = re.search(r"(\d+)\.", out)
+            if match:
+                return int(match.group(1))
+    except Exception:
+        pass
     return None
 #>
 

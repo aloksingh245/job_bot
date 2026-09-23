@@ -100,6 +100,16 @@ about_company_for_ai = None  # filled in later, once we're processing a specific
 pacing = PacingPolicy(logger=print_lg)
 leave_browser_open = False
 
+if use_AI:
+    try:
+        from modules.resumes.extractor import extract_resume_text
+        _resume_content = extract_resume_text(default_resume_path)
+        if _resume_content:
+            user_information_all = f"{user_information_all}\n\n--- EXTRACTED RESUME DETAILS ({os.path.basename(default_resume_path)}) ---\n{_resume_content}"
+            print_lg(f"Loaded resume details from {os.path.basename(default_resume_path)} into AI context.")
+    except Exception as _e:
+        print_lg("Could not append resume text to AI context:", _e)
+
 #>
 
 

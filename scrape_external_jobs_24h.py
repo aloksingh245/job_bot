@@ -208,7 +208,7 @@ def _create_driver():
         disable_extensions, safe_mode, file_name, failed_file_name, generated_resume_path,
     )
     from config.questions import default_resume_path
-    from modules.helpers import get_default_temp_profile, make_directories, find_default_profile_directory
+    from modules.helpers import get_default_temp_profile, make_directories, find_default_profile_directory, get_installed_chrome_major_version
 
     make_directories([
         file_name, failed_file_name,
@@ -238,7 +238,11 @@ def _create_driver():
 
     _log("Launching Chrome (downloading matching driver if needed)...")
     if auto_manage_driver:
-        driver = uc.Chrome(options=options)
+        chrome_version = get_installed_chrome_major_version()
+        if chrome_version:
+            driver = uc.Chrome(options=options, version_main=chrome_version)
+        else:
+            driver = uc.Chrome(options=options)
     else:
         driver = webdriver.Chrome(options=options)
 
@@ -349,23 +353,53 @@ def scrape_external_jobs() -> None:
                         driver.execute_script("arguments[0].click();", card)
                     _wait(2, 3)
 
-                    # --- Is it Easy Apply? Skip if yes ---
-                    easy_btn = _find(driver,
-                        '//button[contains(@class,"jobs-apply-button") and contains(.,"Easy Apply")]')
-                    if easy_btn:
-                        continue   # Skip silently — we only want external
+                    # --- Locate active details pane ---
+                    details_pane = _find(driver,
+                        '//div[contains(@class,"jobs-search__job-details")]'
+                        ' | //div[contains(@class,"job-view-layout")]'
+                        ' | //div[contains(@class,"scaffold-layout__detail")]'
+                        ' | //section[contains(@class,"two-pane-serp-page__detail-view")]')
 
-                    # --- Find the external "Apply" button ---
-                    apply_btn = _find(driver,
-                        '//button[contains(@class,"jobs-apply-button")'
-                        ' and not(contains(.,"Easy Apply"))]'
-                        ' | //a[contains(@class,"jobs-apply-button")]')
-                    if not apply_btn:
+                    # Extract raw text from card and details pane
+                    card_text = (card.text or "").lower()
+                    pane_text = (details_pane.text or "").lower() if details_pane else ""
+
+                    # --- Check if job is Easy Apply (check card + active pane) ---
+                    if "easy apply" in card_text:
+                        _log(f"   [Skip] Easy Apply detected on card for Job ID {job_id}")
+                        continue
+
+                    if details_pane:
+                        easy_in_pane = _find(details_pane,
+                            './/button[contains(@class,"jobs-apply-button") and (contains(.,"Easy Apply") or contains(@aria-label,"Easy Apply"))]'
+                            ' | .//span[contains(text(),"Easy Apply")]'
+                            ' | .//*[contains(@aria-label,"Easy Apply")]')
+                        if easy_in_pane or "easy apply" in pane_text:
+                            _log(f"   [Skip] Easy Apply detected in details pane for Job ID {job_id}")
+                            continue
+
+                    # --- Find external Apply button (SEARCH ONLY INSIDE DETAILS PANE) ---
+                    apply_btn = None
+                    if details_pane:
+                        apply_btn = _find(details_pane,
+                            './/button[contains(@class,"jobs-apply-button")]'
+                            ' | .//a[contains(@class,"jobs-apply-button")]'
+                            ' | .//div[contains(@class,"jobs-apply-button--top-card")]//button'
+                            ' | .//div[contains(@class,"jobs-apply-button--top-card")]//a')
+                    else:
                         apply_btn = _find(driver,
                             '//div[contains(@class,"jobs-apply-button--top-card")]//button'
                             ' | //div[contains(@class,"jobs-apply-button--top-card")]//a')
+
                     if not apply_btn:
-                        continue   # No apply button at all — skip
+                        continue   # No apply button found — skip
+
+                    # Safety check: double-check that this specific button is NOT Easy Apply
+                    btn_text = (apply_btn.text or "").lower()
+                    btn_aria = (apply_btn.get_attribute("aria-label") or "").lower()
+                    if "easy apply" in btn_text or "easy apply" in btn_aria:
+                        _log(f"   [Skip] Easy Apply button safeguards triggered for Job ID {job_id}")
+                        continue
 
                     # --- Extract job details ---
                     title = "Unknown"
